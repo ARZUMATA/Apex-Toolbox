@@ -1420,9 +1420,40 @@ class BUTTON_CUSTOM2(bpy.types.Operator):
                                         foldername = mSlot_clean
                                         texSets = ttf_texSets
            
+                        # New texture namings for RSX
+                        texture_naming_map = {
+                            'albedoTexture':                ['col'],
+                            'specTexture':                  ['spc'],
+                            #'emissiveTexture':              ['ehl', 'ehm'],
+                            'emissiveTexture':              ['ehm'],
+                            'scatterThicknessTexture':      ['thk'],
+                            'normalTexture':                ['nml'],
+                            'glossTexture':                 ['gls'],
+                            'aoTexture':                    ['ao'],
+                            'cavityTexture':                ['cav'],
+                            'iridescenceRampTexture':       ['ilm']
+                        }
                         
                         texFile = folderpath + fbs + foldername + '_' + texSets[0][0] + ".png" #check if albedo image exist, if not dont proceed clear nodes
                         
+                        # Check if texFile exists
+                        if os.path.isfile(texFile):
+                            exist = 1
+                        else:
+                            # Create updated texSets with new naming
+                            for i, texSet in enumerate(texSets):
+                                old_name = texSet[0]
+                                # If old name exists in mapping, replace with new name
+                                if old_name in texture_naming_map:
+                                    texSets[i] = texture_naming_map[old_name]  # Replace with new name array
+
+                            # Verify updated names
+                            for texSet in texSets:
+                                print(f"Updated texture name: {texSet[0]}")
+
+                            # Update texFile with new naming
+                            texFile = folderpath + fbs + foldername + '_' + texSets[0][0] + ".png" #check if albedo image exist, if not dont proceed clear nodes
+
                         if os.path.isfile(texFile):
                             exist = 1
                         else:
