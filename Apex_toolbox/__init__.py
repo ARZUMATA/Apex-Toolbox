@@ -39,7 +39,27 @@ ver = "v.3.7_beta-2"
 #ver = "v.3.6"
 lts_ver = ver
 loadImages = True
-texSets = [['albedoTexture'],['specTexture'],['emissiveTexture'],['scatterThicknessTexture'],['opacityMultiplyTexture'],['normalTexture'],['glossTexture'],['aoTexture'],['cavityTexture'],['anisoSpecDirTexture'],['iridescenceRampTexture']]
+
+# Alternative names since
+# Also texture namings for RSX
+texSets = [
+    # [(long_name, short_name), (colorspace, shader_input)]
+    [(  'albedoTexture',              'col',  ),       (  'sRGB',       'Albedo'                        )],
+    [(  'specTexture',                'spc',  ),       (  'sRGB',       'Specular'                      )],
+    [(  'emissiveTexture',            'ehm',  ),       (  'Non-Color',  'Emission'                      )], # ehl
+    [(  'scatterThicknessTexture',    'thk',  ),       (  'Non-Color',  'Scatter Thickness (Radius)'    )],
+    [(  'opacityMultiplyTexture',     None,   ),       (  'Non-Color',  'Alpha (Opacity Multiply)'      )],
+    [(  'normalTexture',              'nml',  ),       (  'Non-Color',  'Normal Map'                    )],
+    [(  'glossTexture',               'gls',  ),       (  'Non-Color',  'Glossiness'                    )],
+    [(  'aoTexture',                   'ao',  ),       (  'Non-Color',  'Ambient Occlusion'             )],
+    [(  'cavityTexture',              'cav',  ),       (  'Non-Color',  'Cavity'                        )],
+    [(  'anisoSpecDirTexture',        None,   ),       (  'Non-Color',  'Anis-Spec Dir'                 )],
+    [(  'iridescenceRampTexture',     'ilm',  ),       (  'Non-Color',  None                            )],
+]
+
+# Define supported image extensions
+IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.tga', '.bmp', '.dds', '.tif', '.tiff', '.exr', '.hdr'}
+
 ## Garlicus List vars ##
 lgnd_list = []
 ver_list = []
@@ -288,6 +308,12 @@ class PROPERTIES_CUSTOM(bpy.types.PropertyGroup):
                 ]
         )
         
+    texture_folder: bpy.props.StringProperty(name="Folder",
+                                        description="Select textures folder",
+                                        default="",
+                                        maxlen=1024,
+                                        subtype="DIR_PATH")
+    
     recolor_folder: bpy.props.StringProperty(name="Folder",
                                         description="Select Recolor textures folder",
                                         default="",
@@ -598,10 +624,66 @@ class BUTTON_CUSTOM(bpy.types.Operator):
     bl_idname = "object.button_custom"
     bl_options = {'REGISTER', 'UNDO'}
     
+    dict_textures = {}
+
+    def scan_textures(self, folder_path, recursive=True, max_depth=2):
+        """Scan folder for image files and map to texture type. Optionally recursively with depth limit."""
+        texture_map = {}  # {filename: (type, colorspace, shader_input, full_path)}
+
+        if not os.path.isdir(folder_path):
+            print(f"Folder not found: {folder_path}")
+            return texture_map
+
+        def walk_with_depth(root, current_depth=0):
+            """Recursive walk with depth limit."""
+            if max_depth is not None and current_depth > max_depth:
+                return
+
+            for item in os.listdir(root):
+                item_path = os.path.join(root, item)
+                if os.path.isfile(item_path):
+                    ext = os.path.splitext(item)[1].lower()
+                    if ext in IMAGE_EXTENSIONS:
+                        # Extract base name (without extension)
+                        base_name = os.path.splitext(item)[0]
+
+                        # Try to extract texture type from end (e.g., 'catalyst_lgnd_v22_partybeach_body_col' → 'col')
+                        parts = base_name.split('_')
+                        texture_type = parts[-1]  # last part
+
+                        # Search texSets for match (long or short name)
+                        matched_entry = None
+
+                        for entry in texSets:
+                            names = entry[0]  # (long_name, short_name)
+                            if texture_type in names:
+                                matched_entry = entry
+                                break
+                        
+                        if matched_entry:
+                            colorspace, shader_input = matched_entry[1]
+                            texture_map[item] = (texture_type, colorspace, shader_input, item_path)
+                        else:
+                            print(f"Unknown texture type: {texture_type} in {item}")
+                            texture_map[item] = (texture_type, 'Unknown', 'Unknown', item_path)
+                elif os.path.isdir(item_path) and recursive:
+                    walk_with_depth(item_path, current_depth + 1)
+
+        walk_with_depth(folder_path)
+
+        return texture_map
     
     def execute(self, context):
         scene = context.scene
         prefs = scene.my_prefs
+        texture_folder = prefs.texture_folder
+        texture_map = self.scan_textures(texture_folder)
+
+    # Before Gl2imm used:
+    # MatNodeTree.node_tree.nodes["Image Texture"] or MatNodeTree.node_tree.nodes["0"]
+    # and it's 'imageNode.image.filepath' in order to get path, load all textures and assign them based on their type.
+    # Some RSX exports have that part missing and if you recolate textures it all goes wrong.
+    # Also it uses same from as recolor one so we can rewrite it and use texture/recolor by simply pointing it to the folder we need.
            
     ########## OPTION - 1 (Apex Shader) ############
         if prefs.cust_enum2 == 'OP1':        
@@ -3340,6 +3422,12 @@ class AUTOTEX_MENU(bpy.types.Panel):
         if context.scene.subpanel_status_0:           
             box = layout.box()
             box.prop(prefs, "cust_enum2")
+
+            box = layout.box()
+            box.label(text = "Select Texture Folder")
+            box.prop(prefs, 'texture_folder')
+            
+
             split = box.split(factor = 0.5)
             col = split.column(align = True)
             split.operator("object.button_custom", text = "Texture Model")
