@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+# But keep these
+!.git
+!Apex_toolbox
+!.gitignore
+!LICENSE
+!README.md
