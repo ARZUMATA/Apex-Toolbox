@@ -31,8 +31,7 @@ import requests
 import webbrowser
 import sys
 import platform
-
-
+import colorsys
 
 ## Toolbox vars ##
 ver = "v.3.7_beta-2"
@@ -43,19 +42,44 @@ loadImages = True
 # Alternative names since
 # Also texture namings for RSX
 texSets = [
-    # [(long_name, short_name), (colorspace, shader_input)]
-    [(  'albedoTexture',              'col',  ),       (  'sRGB',       'Albedo'                        )],
-    [(  'specTexture',                'spc',  ),       (  'sRGB',       'Specular'                      )],
-    [(  'emissiveTexture',            'ehm',  ),       (  'Non-Color',  'Emission'                      )], # ehl
-    [(  'scatterThicknessTexture',    'thk',  ),       (  'Non-Color',  'Scatter Thickness (Radius)'    )],
-    [(  'opacityMultiplyTexture',     None,   ),       (  'Non-Color',  'Alpha (Opacity Multiply)'      )],
-    [(  'normalTexture',              'nml',  ),       (  'Non-Color',  'Normal Map'                    )],
-    [(  'glossTexture',               'gls',  ),       (  'Non-Color',  'Glossiness'                    )],
-    [(  'aoTexture',                   'ao',  ),       (  'Non-Color',  'Ambient Occlusion'             )],
-    [(  'cavityTexture',              'cav',  ),       (  'Non-Color',  'Cavity'                        )],
-    [(  'anisoSpecDirTexture',        None,   ),       (  'Non-Color',  'Anis-Spec Dir'                 )],
-    [(  'iridescenceRampTexture',     'ilm',  ),       (  'Non-Color',  None                            )],
+    # [
+    # (long_name, short_name),           # texture name variants
+    # (colorspace, shader_input),        # for image settings + node group input
+    # (r, g, b)                          # node color in Blender (0.0–1.0)
+    # ]
+
+    [(  'albedoTexture',              'col',  ),       (  'sRGB',       'Albedo'                        ), ],
+    [(  'specTexture',                'spc',  ),       (  'sRGB',       'Specular'                      ), ],
+    [(  'emissiveTexture',            'ehm',  ),       (  'Non-Color',  'Emission'                      ), ], # ehl
+    [(  'scatterThicknessTexture',    'thk',  ),       (  'Non-Color',  'Scatter Thickness (Radius)'    ), ],
+    [(  'opacityMultiplyTexture',     None,   ),       (  'Non-Color',  'Alpha (Opacity Multiply)'      ), ],
+    [(  'normalTexture',              'nml',  ),       (  'Non-Color',  'Normal Map'                    ), ],
+    [(  'glossTexture',               'gls',  ),       (  'Non-Color',  'Glossiness'                    ), ],
+    [(  'aoTexture',                   'ao',  ),       (  'Non-Color',  'Ambient Occlusion'             ), ],
+    [(  'cavityTexture',              'cav',  ),       (  'Non-Color',  'Cavity'                        ), ],
+    [(  'anisoSpecDirTexture',        None,   ),       (  'Non-Color',  'Anis-Spec Dir'                 ), ],
+    [(  'iridescenceRampTexture',     'ilm',  ),       (  'Non-Color',  None                            ), ],
 ]
+
+# Friendship is magic!
+def generate_rainbow_colors(n, saturation=0.8, value=0.4):
+    """Generate n distinct rainbow colors (darker for white text)"""
+    colors = []
+    for i in range(n):
+        hue = i / n  # 0.0 to 1.0
+        r, g, b = colorsys.hsv_to_rgb(hue, saturation, value)
+        colors.append((r, g, b))
+    return colors
+
+# Generate colors for all texSets entries
+rainbow_colors = generate_rainbow_colors(len(texSets), saturation=0.8, value=0.4)
+
+# Assign colors to texSets
+for i, entry in enumerate(texSets):
+    entry.append(rainbow_colors[i])  # Add color as 3rd element
+
+# Result:
+# [(long, short), (colorspace, shader_input), (r, g, b)]
 
 # Define supported image extensions
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.tga', '.bmp', '.dds', '.tif', '.tiff', '.exr', '.hdr'}
@@ -307,7 +331,7 @@ class PROPERTIES_CUSTOM(bpy.types.PropertyGroup):
                  ('OP3', "S/G-Blender", "")    
                 ]
         )
-        
+
     texture_folder: bpy.props.StringProperty(name="Folder",
                                         description="Select textures folder",
                                         default="",
@@ -628,7 +652,26 @@ class BUTTON_CUSTOM(bpy.types.Operator):
 
     def scan_textures(self, folder_path, recursive=True, max_depth=2):
         """Scan folder for image files and map to texture type. Optionally recursively with depth limit."""
-        texture_map = {}  # {filename: (type, colorspace, shader_input, full_path)}
+        
+        # Example output:
+        # {
+        #     'col.png': (
+        #         'col',
+        #         'sRGB',
+        #         'Albedo',
+        #         '/textures/char/loba_lgnd_v24_opbundle_body_col.png',
+        #         (0.8, 0.2, 0.2)  # - Red
+        #     ),
+        #     'nml.png': (
+        #         'nml',
+        #         'Non-Color',
+        #         'Normal Map',
+        #         '/textures/char/loba_lgnd_v24_opbundle_body_nml.png',
+        #         (0.2, 0.6, 0.8)  # - Light Blue
+        #     )
+        # }
+        
+        texture_map = {}  # {filename: (type, colorspace, shader_input, full_path, node_color)}
 
         if not os.path.isdir(folder_path):
             print(f"Folder not found: {folder_path}")
@@ -647,7 +690,7 @@ class BUTTON_CUSTOM(bpy.types.Operator):
                         # Extract base name (without extension)
                         base_name = os.path.splitext(item)[0]
 
-                        # Try to extract texture type from end (e.g., 'catalyst_lgnd_v22_partybeach_body_col' → 'col')
+                        # Try to extract texture type from end (e.g., 'catalyst_lgnd_v22_partybeach_body_col' - 'col')
                         parts = base_name.split('_')
                         texture_type = parts[-1]  # last part
 
@@ -662,21 +705,29 @@ class BUTTON_CUSTOM(bpy.types.Operator):
                         
                         if matched_entry:
                             colorspace, shader_input = matched_entry[1]
-                            texture_map[item] = (texture_type, colorspace, shader_input, item_path)
+                            node_color = matched_entry[2]  # - RGB color from texSets
+                            texture_map[item] = (texture_type, colorspace, shader_input, item_path, node_color)
                         else:
                             print(f"Unknown texture type: {texture_type} in {item}")
-                            texture_map[item] = (texture_type, 'Unknown', 'Unknown', item_path)
+                            texture_map[item] = (texture_type, 'Unknown', 'Unknown', item_path, (0.3, 0.3, 0.3))  # Default gray
+
                 elif os.path.isdir(item_path) and recursive:
                     walk_with_depth(item_path, current_depth + 1)
 
         walk_with_depth(folder_path)
 
         return texture_map
-    
+
     def execute(self, context):
         scene = context.scene
         prefs = scene.my_prefs
         texture_folder = prefs.texture_folder
+
+        # Get texture folder from prefs
+        if not texture_folder:
+            print("texture_folder is not set. Skipping texture assignment.")
+            return
+
         texture_map = self.scan_textures(texture_folder)
 
     # Before Gl2imm used:
@@ -684,7 +735,7 @@ class BUTTON_CUSTOM(bpy.types.Operator):
     # and it's 'imageNode.image.filepath' in order to get path, load all textures and assign them based on their type.
     # Some RSX exports have that part missing and if you recolate textures it all goes wrong.
     # Also it uses same from as recolor one so we can rewrite it and use texture/recolor by simply pointing it to the folder we need.
-           
+
     ########## OPTION - 1 (Apex Shader) ############
         if prefs.cust_enum2 == 'OP1':        
             if bpy.data.node_groups.get('Apex Shader') == None:
@@ -780,95 +831,170 @@ class BUTTON_CUSTOM(bpy.types.Operator):
 
     ########## OPTION - 2 (Apex Shader+) ############
         if prefs.cust_enum2 == 'OP2':        
-            if bpy.data.node_groups.get('Apex Shader+_v3.4') == None:
+            if bpy.data.node_groups.get('Apex Shader+_v3.4') == None: # Add entry for shader with path
                 selection = [obj.name for obj in bpy.context.selected_objects]
                 bpy.ops.wm.append(directory =my_path + blend_file + ap_node, filename ='Apex Shader+_v3.4')
                 for x in range(len(selection)):
                     bpy.data.objects[selection[x]].select_set(True)
                     x += 1
             
+            # Loop through every object currently selected in the Blender viewport.
             for o in bpy.context.selected_objects:
+
+                # Only process mesh objects (not lights, cameras, empties, etc.).
                 if o.type == 'MESH':
+
+                    # Loop through all material slots assigned to this mesh object.
+                    # A mesh can have multiple materials (e.g., for different parts of the mesh).
                     for mSlot in o.material_slots:
+
+                        # Get the actual material from Blender’s global data block.
                         MatNodeTree = bpy.data.materials[mSlot.name]
-                        try:
-                            imageNode = MatNodeTree.node_tree.nodes["Image Texture"]
-                        except:
-                            try:
-                                imageNode = MatNodeTree.node_tree.nodes["0"]
-                            except:
-                                print(MatNodeTree.name)
-                                continue
-                        try:
-                            image = os.path.basename(bpy.path.abspath(imageNode.image.filepath))
-                        except:
-                            print(mSlot.name, "missing texture.")
-                        imagepath = os.path.dirname(bpy.path.abspath(imageNode.image.filepath))
-                        imageType = imageNode.image.name.split(".")[0].split('_')[-1]
-                        imageName = MatNodeTree.name
-                        imageFormat = image.split('.')[1]
-                        
-                        if not any(imageType in x for x in texSets):
-                            print(image,"could not be mapped.")        
-                            continue
 
+                        # mSlot.name we need to find our texture based on it's name
+                        material_name = mSlot.name  # e.g., 'loba_lgnd_v24_opbundle_body'
 
+                        # This completely removes all the nodes.
+                        # Not good especially if you retexture or have custom setup.
+                        # All existing nodes (Image Texture, Principled BSDF, Mix Shader, etc.) are removed.
+                        # The material becomes empty — no shader, no textures, no connections.
+                        # We gotta rebuild the node tree from scratch.
+                        # TODO: Keep texture nodes and simpy load new texture.
                         MatNodeTree.node_tree.nodes.clear()
                         
-                        for i in range(len(texSets)):
-                            for j in range(len(texSets[i])):
-                                texImageName = imageName + '_' + texSets[i][j] + '.' + imageFormat
-                                texImage = bpy.data.images.get(texImageName)
-                                texFile = imagepath + fbs + texImageName
-                                if not texImage and loadImages:
-                                    if os.path.isfile(texFile):
-                                        texImage = bpy.data.images.load(texFile)
-                                if texImage:
-                                    if i > 2:
-                                        texImage.colorspace_settings.name = 'Non-Color'
-                                    texImage.alpha_mode = 'CHANNEL_PACKED'
-                                    texNode = MatNodeTree.node_tree.nodes.new('ShaderNodeTexImage')
-                                    texNode.image = texImage
-                                    texNode.name = str(i)
-                                    texNode.location = (-50,50-260*i)
-                                    break
-                                
-                                
+                        # Filter texture_map: only entries where full_path contains material_name
+                        local_texture_map = {
+                            filename: (type_, colorspace, shader_input, full_path, node_color)
+                            for filename, (type_, colorspace, shader_input, full_path, node_color) in texture_map.items()
+                            if material_name in full_path
+                        }
 
+                        for filename, (type_, colorspace, shader_input, full_path, node_color) in local_texture_map.items():
+                            # Now we have:
+                            # filename - e.g. 'col.png'
+                            # colorspace - e.g. 'sRGB'
+                            # shader_input - e.g. 'Albedo'
+                            # full_path - e.g. '/textures/char/loba_lgnd_v24_opbundle_body_col.png'
+                            print(f"Processing {filename}: {colorspace} - {shader_input}")
+
+                            # If image esists in all loaded images in the current .blend file.
+                            texImage = bpy.data.images.get(filename)
+
+                            # Not found. Load it then.
+                            if not texImage and loadImages:
+                                if os.path.isfile(full_path):
+                                    texImage = bpy.data.images.load(full_path)
+
+                            if texImage:
+                                # Set colorspace
+                                texImage.colorspace_settings.name = colorspace
+                                texImage.alpha_mode = 'CHANNEL_PACKED'
+
+                                # Create texture node
+                                texNode = MatNodeTree.node_tree.nodes.new('ShaderNodeTexImage')
+                                texNode.image = texImage
+                                texNode.name = str(shader_input)
+                                texNode.label = str(shader_input)
+                                texNode.location = (-50, 50 - 260 * len(MatNodeTree.node_tree.nodes)) # Auto-position
+
+                                # Apply color
+                                texNode.use_custom_color = True
+                                texNode.color = node_color
+
+                        # Create a material node setup using a ShaderNodeGroup (like Apex Shader), link texture nodes (created earlier) to its inputs, and set the material to use HASHED blend mode.
+
+                        # Creates a new ShaderNodeGroup node in the material’s node tree.
+                        # This node will act as a wrapper for a pre-defined node group (like a custom shader graph).
                         NodeGroup = MatNodeTree.node_tree.nodes.new('ShaderNodeGroup')
+
+                        # Assign the actual node group named 'like Apex Shader' to this node.
                         NodeGroup.node_tree = bpy.data.node_groups.get('Apex Shader+_v3.4')
+
+                        # Set Node Group Location
                         NodeGroup.location = (300,0)
+
+                        # Creates the final output node where the material’s shader result goes to the renderer.
+                        # Every material must have at least one ShaderNodeOutputMaterial.
                         NodeOutput = MatNodeTree.node_tree.nodes.new('ShaderNodeOutputMaterial')
+
+                        # Set Output Node Location
                         NodeOutput.location = (500,0)
+
+                        # Link Node Group Output to Material Output
                         MatNodeTree.node_tree.links.new(NodeOutput.inputs[0], NodeGroup.outputs[0])
-                                               
+
+                        # Define Input Mapping Dictionaries. Idx , Input name in the node group.
+                        # These names must match exactly the input names in the node group.
+                        # Example:
+                        # Texture node 0 - links to input "Albedo"
+                        # Texture node 1 - links to input "Specular"
+
                         ColorDict = {
-                            "0": "Albedo",
-                            "1": "Specular",
-                            "2": "Emission",
-                            "3": "SSS Map",
-                            "4": "Alpha",     
-                            "5": "Normal Map",
-                            "6": "Glossiness",
-                            "7": "Ambient Occlusion",
-                            "8": "Cavity"
+                            "Albedo": "Albedo",
+                            "Specular": "Specular",
+                            "Emission": "Emission",
+                            "SSS Map": "SSS Map", # i dont that in shader
+                            "Alpha": "Alpha",
+                            "Normal Map": "Normal Map",
+                            "Glossiness": "Glossiness",
+                            "Ambient Occlusion": "Ambient Occlusion",
+                            "Cavity": "Cavity"
                         }
+
+                        # Maps texture node index to alpha input names in the node group.
+                        # Link Alpha channel (transparency) from texture nodes to specific inputs.
+                        # For materials that use alpha for transparency or subsurface scattering.
+                        # Example:
+                        # Texture node 0 - links its Alpha output to node group input "Alpha"
+                        # Texture node 3 - links its Alpha output to node group input "SSS Alpha"
+
+                        # TODO: verify it applies right
                         AlphaDict = {
-                            "0": "Alpha",
-                            "3": "SSS Alpha",
+                            "Alpha": "Alpha",
+                            "SSS Alpha": "SSS Alpha",
                         }
+
+                        # Link Alpha Inputs
+
+                        # For each entry in AlphaDict:
+                        # slot = texture node index (e.g., "0")
+                        # AlphaDict[slot] = input name in node group (e.g., "Alpha")
+                        # MatNodeTree.node_tree.nodes[slot] = the texture node at that index
+                        # .outputs["Alpha"] = the Alpha channel output of that texture node
+                        # Create a link from texture node’s Alpha - node group’s Alpha input
+                        # We control transparency or SSS thickness using the alpha channel of a texture.
 
                         for slot in AlphaDict:
                             try:
                                 MatNodeTree.node_tree.links.new(NodeGroup.inputs[AlphaDict[slot]], MatNodeTree.node_tree.nodes[slot].outputs["Alpha"])
                             except:
                                 pass
+                        
+                        # Link Color Inputs
+
+                        # For each entry in ColorDict:
+                        # Links the Color output of the texture node - the corresponding color input in the node group.
+                        # Example:
+                        # Texture node 0 - Color output - node group input "Albedo"
+                        # Texture node 5 - Color output - node group input "Normal Map"
+
                         for slot in ColorDict:
                             try:
                                 MatNodeTree.node_tree.links.new(NodeGroup.inputs[ColorDict[slot]], MatNodeTree.node_tree.nodes[slot].outputs["Color"])
                             except:
                                 pass
+
+                        # Set Blend Method
+
+                        # Sets the material’s blend mode to HASHED.
+                        # This is used for transparency with alpha testing (like eyelashes).
+                        # Other common values:
+                        # 'OPAQUE' - no transparency
+                        # 'BLEND' - smooth transparency (slower)
+                        # 'HASHED' - fast alpha testing (good for performance)
+                        # Required for materials that use alpha maps to cut out parts of the mesh.
                         mSlot.material.blend_method = 'HASHED'
+
                         print("Textured",mSlot.name)
 
 
