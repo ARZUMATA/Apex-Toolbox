@@ -158,3 +158,9 @@ v3.7 Changes:
 	removed the Skin Translate list (link still remain there)
 	Added Animation and Bones tab with some quick actions related to Bones and Animation
 	Updated Apex Shader+ to v3.4
+
+v3.7.1 Changes:
+	Added texture folder entry for the texturing part.
+	Now we can recursively search for all textures and choose correct ones before applying them.
+	Color coded nodes and their labels reflect their types.
+	

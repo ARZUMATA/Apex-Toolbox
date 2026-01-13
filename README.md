@@ -1,3 +1,13 @@
+# Note from ARZUMATA
+
+This project hasn’t been updated in a while, so it doesn’t work well with the recent RSX (Legion+ successor).  
+I made some updates and cleaned up parts of the code (mostly for the shader I need) to streamline the "RSX export - texturing" workflow - and that’s it.
+
+Plans? None for now. Maybe I’ll refactor the texture/recolor code later (it’s basically the same logic anyway), but no promises.  
+I’m just a girl doing this for my own hobby - but if you want to extend it, go ahead and make a PR. Why not?
+
+- Ksenia Meduzkova
+
 # Apex-Toolbox
 
 This tool was created to assist and simplify workflow for Apex Legends effects in Blender since they cannot be simply exported from the game. Here i collect and organize useful tools/addons/operations all in one place. 

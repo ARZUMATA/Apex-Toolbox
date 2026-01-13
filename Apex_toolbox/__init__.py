@@ -650,6 +650,16 @@ class BUTTON_CUSTOM(bpy.types.Operator):
     
     dict_textures = {}
 
+    def set_colorspace(self, img, colorspace):
+        """Set image colorspace, fallback to 'Non-Color' if unknown."""
+
+        if colorspace == 'Unknown':
+            img.colorspace_settings.name = 'Non-Color'
+            print(f"Warning: Unknown colorspace for {img} — using 'Non-Color'")
+        else:
+            img.colorspace_settings.name = colorspace
+
+
     def scan_textures(self, folder_path, recursive=True, max_depth=2):
         """Scan folder for image files and map to texture type. Optionally recursively with depth limit."""
         
@@ -706,10 +716,13 @@ class BUTTON_CUSTOM(bpy.types.Operator):
                         if matched_entry:
                             colorspace, shader_input = matched_entry[1]
                             node_color = matched_entry[2]  # - RGB color from texSets
-                            texture_map[item] = (texture_type, colorspace, shader_input, item_path, node_color)
                         else:
+                            colorspace = 'Non-Color' # Fallback here, not later
+                            shader_input = 'Unknown'
+                            node_color = (0.3, 0.3, 0.3) # Default gray
                             print(f"Unknown texture type: {texture_type} in {item}")
-                            texture_map[item] = (texture_type, 'Unknown', 'Unknown', item_path, (0.3, 0.3, 0.3))  # Default gray
+
+                        texture_map[item] = (texture_type, colorspace, shader_input, item_path, node_color)
 
                 elif os.path.isdir(item_path) and recursive:
                     walk_with_depth(item_path, current_depth + 1)
@@ -887,7 +900,7 @@ class BUTTON_CUSTOM(bpy.types.Operator):
 
                             if texImage:
                                 # Set colorspace
-                                texImage.colorspace_settings.name = colorspace
+                                self.set_colorspace(texImage, colorspace)
                                 texImage.alpha_mode = 'CHANNEL_PACKED'
 
                                 # Create texture node
