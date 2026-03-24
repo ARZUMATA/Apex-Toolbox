@@ -770,14 +770,14 @@ class BUTTON_CUSTOM(bpy.types.Operator):
             'OP1': {
                 'node_group_name': 'Apex Shader',
                 'color_dict': {
-                    "Albedo Map" : "Albedo Map",
-                    "Specular Map" : "Specular Map",
+                    "Albedo" : "Albedo Map",
+                    "Specular" : "Specular Map",
                     "Emission" : "Emission",
                     "SSS Map" : "SSS Map",
                     "Alpha" : "Alpha",
                     "Normal Map" : "Normal Map",
-                    "Glossiness Map" : "Glossiness Map",
-                    "AO" : "AO"
+                    "Glossiness" : "Glossiness Map",
+                    "Ambient Occlusion" : "AO"
                 },
                 'alpha_dict': {
                     "Alpha": "Alpha",
@@ -805,14 +805,14 @@ class BUTTON_CUSTOM(bpy.types.Operator):
             'OP3': {
                 'node_group_name': 'S/G-Blender',
                 'color_dict': {
-                    "Diffuse map": "Diffuse map",
-                    "Specular map": "Specular map",
-                    "Emission input": "Emission input",
+                    "Albedo": "Diffuse map",
+                    "Specular": "Specular map",
+                    "Emission": "Emission input",
                     "Subsurface": "Subsurface",
                     "Alpha input": "Alpha input",
-                    "Normal map": "Normal map",
-                    "Glossiness map": "Glossiness map",
-                    "AO map": "AO map",
+                    "Normal Map": "Normal map",
+                    "Glossiness": "Glossiness map",
+                    "Ambient Occlusion": "AO map",
                     "Cavity map": "Cavity map",
                 },
                 'alpha_dict': {
