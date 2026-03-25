@@ -18,8 +18,6 @@ from . import config
 
 from . import preferences
 from . import operators
-from . import character_operators
-from . import item_operators
 from . import panels
 
 # Re-export classes for registration
@@ -38,14 +36,8 @@ from .preferences import (
 
 from .operators import (
     LGNDTRANSLATE_URL, BUTTON_CUSTOM, BUTTON_TOON, BUTTON_SHADOW,
-    BUTTON_CUSTOM2, BUTTON_SHADERS, BUTTON_HDRIFULL, BUTTON_IKBONE
-)
-
-from .character_operators import (
-    WR_BUTTON_PORTAL, GB_BUTTON_ITEMS, MR_BUTTON_DECOY, VK_BUTTON_ITEMS
-)
-
-from .item_operators import (
+    BUTTON_CUSTOM2, BUTTON_SHADERS, BUTTON_HDRIFULL, BUTTON_IKBONE,
+    WR_BUTTON_PORTAL, GB_BUTTON_ITEMS, MR_BUTTON_DECOY, VK_BUTTON_ITEMS,
     BDG_BUTTON_SPAWN, SEER_BUTTON_SPAWN, SKY_BUTTON_SPAWN, WPN_BUTTON_SPAWN,
     LT_BUTTON_SPAWN, LB_BUTTON_SPAWN, HL_BUTTON_SPAWN, EF_BUTTON_SPAWN
 )
@@ -68,12 +60,12 @@ classes = (
     BUTTON_HDRIFULL,
     BUTTON_IKBONE,
     WR_BUTTON_PORTAL,
-    SEER_BUTTON_SPAWN,
-    SKY_BUTTON_SPAWN,
     GB_BUTTON_ITEMS,
     MR_BUTTON_DECOY,
     VK_BUTTON_ITEMS,
     BDG_BUTTON_SPAWN,
+    SEER_BUTTON_SPAWN,
+    SKY_BUTTON_SPAWN,
     WPN_BUTTON_SPAWN,
     LT_BUTTON_SPAWN,
     LB_BUTTON_SPAWN,
