@@ -1,9 +1,13 @@
-# Ignore everything
+# Ignore
 *
 
-# But keep these
+# Keep
 !.git
 !Apex_toolbox
+!Apex_toolbox/**
 !.gitignore
 !LICENSE
 !README.md
+
+# Ignore
+**/__pycache__/**
