@@ -219,6 +219,8 @@ class BUTTON_CUSTOM(bpy.types.Operator):
                 # Get the actual material from Blender's global data block.
                 MatNodeTree = bpy.data.materials[mSlot.name] # e.g., mSlot.name = 'loba_lgnd_v24_opbundle_body'
                 
+                MatNodeTree.node_tree.nodes.clear()
+
                 # Filter texture_map: only entries where full_path contains material_name
                 local_texture_map = {
                     filename: (type_, colorspace, shader_input, full_path, node_color)
