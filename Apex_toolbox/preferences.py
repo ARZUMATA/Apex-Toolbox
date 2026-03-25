@@ -24,7 +24,7 @@ from .config import mode, ast_fldr, lgn_fdr, my_path, fbs
 
 class apexToolsPreferences(bpy.types.AddonPreferences):
     """Addon preferences class for Apex Toolbox."""
-    bl_idname = __name__
+    bl_idname = "Apex_toolbox"
 
     asset_folder: StringProperty(
         name="Folder",

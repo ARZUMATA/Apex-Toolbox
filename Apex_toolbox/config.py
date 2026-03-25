@@ -14,6 +14,7 @@
 """Configuration and constants module for Apex Toolbox addon."""
 
 import colorsys
+import os
 import platform
 import bpy
 
@@ -112,6 +113,8 @@ if mode == 0:
         lgn_fdr = ("D:\\Personal\\G-Drive\\Blender\\0. Setups\\Apex\\")
 else:
     my_path = os.path.dirname(os.path.realpath(__file__))
+    ast_fldr = os.path.join(my_path, "Apex_Toolbox_Assets")
+    lgn_fdr = my_path
 
 # Blender HDRI paths
 bldr_path = os.path.dirname(bpy.app.binary_path)

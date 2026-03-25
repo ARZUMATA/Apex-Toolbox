@@ -13,6 +13,8 @@
 
 """Apex Toolbox - Blender addon for Apex Legends models."""
 
+import bpy
+
 # Import all modules
 from . import config
 
