@@ -221,11 +221,15 @@ class BUTTON_CUSTOM(bpy.types.Operator):
                 
                 MatNodeTree.node_tree.nodes.clear()
 
-                # Filter texture_map: only entries where full_path contains material_name
+                # Strip numeric suffix (.001, .002, etc.) from material name for matching
+                import re
+                mat_name_base = re.sub(r'\.\d+$', '', mSlot.name)
+                
+                # Filter texture_map: only entries where full_path contains material_name or its base name
                 local_texture_map = {
                     filename: (type_, colorspace, shader_input, full_path, node_color)
                     for filename, (type_, colorspace, shader_input, full_path, node_color) in texture_map.items()
-                        if mSlot.name in full_path
+                        if mSlot.name in full_path or mat_name_base in full_path
                 }
 
                 for filename, (type_, colorspace, shader_input, full_path, node_color) in local_texture_map.items():
