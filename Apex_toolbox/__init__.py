@@ -15,6 +15,17 @@
 
 import bpy
 
+bl_info = {
+    "name": "Apex Toolbox",
+    "author": "Random Blender Dude",
+    "version": (3, 6, 2),
+    "blender": (2, 90, 0),
+    "location": "Operator",
+    "description": "Apex models toolbox",
+    "warning": "Highly Addictive!",
+    "category": "Object"
+}
+
 # Import all modules
 from . import config
 

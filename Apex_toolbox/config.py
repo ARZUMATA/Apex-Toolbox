@@ -18,17 +18,6 @@ import os
 import platform
 import bpy
 
-bl_info = {
-    "name": "Apex Toolbox",
-    "author": "Random Blender Dude",
-    "version": (3, 6, 2),
-    "blender": (2, 90, 0),
-    "location": "Operator",
-    "description": "Apex models toolbox",
-    "warning": "Highly Addictive!",
-    "category": "Object"
-}
-
 # Version variables
 ver = "v.3.7_beta-2"
 lts_ver = ver
