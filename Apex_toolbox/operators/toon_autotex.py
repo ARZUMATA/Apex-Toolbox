@@ -107,6 +107,10 @@ class BUTTON_TOON(bpy.types.Operator):
                 for mSlot in o.material_slots:
                     MatNodeTree = bpy.data.materials[mSlot.name]
                     
+                    # Skip Black Outline material - use simple Color > Material Output without any shaders
+                    if mSlot.name == "Black Outline":
+                        continue
+                    
                     # Define SHADER_CONFIGS for Toon Shader mapping (adapted from autotex.py)
                     TOON_SHADER_CONFIG = {
                         'toon': {
