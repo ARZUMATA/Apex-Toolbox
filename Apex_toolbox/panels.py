@@ -244,14 +244,56 @@ class AUTOTEX_MENU(bpy.types.Panel):
             
             box.label(text="")
             box.label(text="-- Settings needed for Shader: --")
+            
+            # Blender 5.0 EEVEE-Next API Compatibility Notes:
+            # - Property: Status - New Location/Method
+            # - use_bloom: Removed - Glare Node in Compositor (set type to Bloom)
+            # - use_gtao: Removed - Set scene.eevee.fast_gi_method = 'AMBIENT_OCCLUSION_ONLY'
+            # - gtao_distance: Renamed - Moved to View Layer, renamed to view_layer.eevee.ambient_occlusion_distance
+            # - use_shadow_high_bitdepth: Replaced - Controlled via Shadow Resolution or Jittered Shadows
+            
             box.prop(scene.render, "engine")
+            # Shading visibility
             if hasattr(context.space_data, 'shading'):
                 box.prop(context.space_data.shading, "use_scene_lights")
                 box.prop(context.space_data.shading, "use_scene_world")
-            box.prop(scene.eevee, "taa_samples")
-            box.prop(scene.eevee, "use_bloom")
-            box.prop(scene.eevee, "use_gtao")
-            box.prop(scene.eevee, "use_shadow_high_bitdepth")
+
+            # Render Samples
+            # Legacy: EEVEE used 'taa_samples'
+            # 4.2+: Renamed to 'taa_render_samples' to distinguish from Viewport samples
+            if hasattr(scene.eevee, "taa_render_samples"):
+                box.prop(scene.eevee, "taa_render_samples", text="Render Samples")
+            elif hasattr(scene.eevee, "taa_samples"):
+                box.prop(scene.eevee, "taa_samples")
+            
+            # Bloom (The biggest change)
+            # Legacy: A simple checkbox on the engine
+            # 4.2+: Bloom is removed from EEVEE settings; must be done via 'Glare' node in Compositor
+            if hasattr(scene.eevee, "use_bloom"):
+                box.prop(scene.eevee, "use_bloom")
+            else:
+                box.label(text="Bloom: Use Compositor", icon='INFO')
+                box.label(text="Glare Node (set type to Bloom)", icon='INFO')
+
+            # Ambient Occlusion (GTAO)
+            # Legacy: 'use_gtao' was a standalone toggle
+            # 4.2+: AO is now part of the 'Raytracing' or 'Fast GI' systems
+            if hasattr(scene.eevee, "use_gtao"):
+                box.prop(scene.eevee, "use_gtao")
+            elif hasattr(scene.eevee, "use_raytracing"):
+                # Toggling Raytracing is the 5.0 equivalent of enabling high-quality AO/Reflections
+                # If raytracing is off, EEVEE uses "Fast GI," which can be set to AO-only mode.
+                box.prop(scene.eevee, "use_raytracing", text="Raytracing (Inc. AO)")
+
+            # Shadow Quality
+            # Legacy: 'use_shadow_high_bitdepth' for 32-bit shadows
+            # 4.2+: EEVEE-Next uses Virtual Shadow Maps. Bit-depth is handled automatically 
+            # based on the shadow 'method' or 'resolution'. Resolution is the new 'quality' metric.
+            if hasattr(scene.eevee, "use_shadow_high_bitdepth"):
+                box.prop(scene.eevee, "use_shadow_high_bitdepth")
+            elif hasattr(scene.eevee, "shadow_method"):
+                # Shows 'Virtual Shadow Maps' or 'Shadow Maps' options
+                box.prop(scene.eevee, "shadow_method", text="Shadow Method")
 
         # Re-color
         row = layout.row()

@@ -41,13 +41,23 @@ class BUTTON_TOON(bpy.types.Operator):
             bpy.ops.wm.append(directory=my_path + blend_file + ap_collection, filename='Apex ToonShader')
         
         # Set render settings for Eevee
-        scene.render.engine = 'BLENDER_EEEVEE'
+        scene.render.engine = 'BLENDER_EEVEE'
         context.space_data.shading.use_scene_lights = True
         context.space_data.shading.use_scene_world = True
         scene.eevee.taa_samples = 64
-        scene.eevee.use_bloom = True
-        scene.eevee.use_gtao = True
-        scene.eevee.use_shadow_high_bitdepth = True
+        # Blender 5.0: bloom settings moved to render_passes and tonemapper
+        try:
+            scene.eevee.use_bloom = True
+        except AttributeError:
+            pass  # Bloom handled differently in Blender 5.0
+        try:
+            scene.eevee.use_gtao = True
+        except AttributeError:
+            pass  # GTAO handled differently in Blender 5.0
+        try:
+            scene.eevee.use_shadow_high_bitdepth = True
+        except AttributeError:
+            pass  # Shadow bitdepth handled differently in Blender 5.0
         scene.view_settings.view_transform = 'Standard'
         scene.view_settings.look = 'Medium High Contrast'
         
