@@ -14,6 +14,7 @@
 """Apex Toolbox - Blender addon for Apex Legends models."""
 
 import bpy
+import importlib
 
 bl_info = {
     "name": "Apex Toolbox",
@@ -26,12 +27,22 @@ bl_info = {
     "category": "Object"
 }
 
-# Import all modules
-from . import config
+# Reload detection
+_needs_reload = "bpy" in locals()
 
+# Import all modules 
+from . import config
 from . import preferences
 from . import operators
 from . import panels
+
+# Reload logic (Crucial for VS Code Debugging)
+if _needs_reload:
+    importlib.reload(config)
+    importlib.reload(preferences)
+    importlib.reload(operators)
+    importlib.reload(panels)
+    print("Apex Toolbox: Reloaded modules and synced breakpoints.")
 
 # Re-export classes for registration
 from .config import (
