@@ -67,7 +67,8 @@ from .operators import (
 )
 
 from .panels import (
-    AUTOTEX_MENU, EFFECTS_PT_panel, OTHERS_PT_panel, UPDATE_PT_panel
+    AUTOTEX_MENU, EFFECTS_PT_panel, OTHERS_PT_panel, UPDATE_PT_panel,
+    TOON_SHADER_BATCH_UPDATE_ALL
 )
 
 
@@ -95,6 +96,7 @@ classes = (
     LB_BUTTON_SPAWN,
     HL_BUTTON_SPAWN,
     EF_BUTTON_SPAWN,
+    TOON_SHADER_BATCH_UPDATE_ALL,
     AUTOTEX_MENU,
     EFFECTS_PT_panel,
     OTHERS_PT_panel,

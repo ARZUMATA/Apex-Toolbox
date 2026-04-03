@@ -156,11 +156,15 @@ class AUTOTEX_MENU(bpy.types.Panel):
             key_lights = bpy.data.collections.get('Apex ToonShader')
             if key_lights is not None:
                 if len(bpy.context.selected_objects) > 0:
-                    try:
+                    # Check if any selected object has Apex ToonShader
+                    objects_with_toon = [obj for obj in bpy.context.selected_objects
+                                         if obj.active_material and
+                                         hasattr(obj.active_material, 'node_tree') and
+                                         'Apex ToonShader' in obj.active_material.node_tree.nodes]
+                    
+                    if len(objects_with_toon) > 0:
                         act_mat = bpy.context.object.active_material
-                    except:
-                        pass
-                    else:
+                        
                         try:
                             toon_shader = act_mat.node_tree.nodes['Apex ToonShader']
                         except:
@@ -168,70 +172,71 @@ class AUTOTEX_MENU(bpy.types.Panel):
                         else:
                             box.label(text="")
                             box.label(text="Shader Key Settings:")
+
+                            # Mapping of UI labels to actual shader input names
+                            # This handles cases where panel display names differ from internal names
+                            # Based on debug output: Input 0-23 with various names including headers
+                            input_mapping = {
+                                'Base Color': '--- Base Color ---',      # Header at index 0
+                                'Hue': 'Hue',                             # Index 1
+                                'Saturation': 'Saturation',               # Index 2
+                                'Value': 'Value',                         # Index 3
+                                'Shadow Color': 'Shadow Color',           # Index 4
+                                'Key Light Color': 'Key Light Color',     # Index 5
+                                'Fill Light Color': 'Fill Light Color',   # Index 6
+                                'White Outline': 'White Outline',         # Index 7
+                                'Outline Thickness': 'Outline Thickness', # Index 8
+                                'Normal Direction X': 'Normal Direction X', # Index 9
+                                'Normal Direction Z': 'Normal Direction Z', # Index 10
+                                'Specular Reflection': '--- Specular Reflection ---',  # Header at index 11
+                                'Size': 'Size',                           # Index 12
+                                'Softness': 'Softness',                   # Index 13
+                                'Move X': 'Move X',                       # Index 14
+                                'Move Z': 'Move Z',                       # Index 15
+                                'Specular Map': '--- Specular map ---',   # Header at index 16
+                                'Hue (Map)': 'Hue',                       # Index 17
+                                'Saturation (Map)': 'Saturation',         # Index 18
+                                'Value (Map)': 'Value',                   # Index 19
+                                'Emission Map': '--- Emission Map ---',   # Header at index 20
+                                'Emission Brightness': 'Emission Brightness',  # Index 21
+                                'Custom Color On/Off': 'Custom Color On/Off',  # Index 22
+                                'Custom Color': 'Custom Color',           # Index 23
+                            }
                             
-                            # Get shader input values safely
+                            # Get shader input values by mapping (handles name differences)
                             try:
-                                set_1 = toon_shader.inputs[4]
-                                set_2 = toon_shader.inputs[5]
-                                set_3 = toon_shader.inputs[6]
-                                set_4 = toon_shader.inputs[7]
-                                set_5 = toon_shader.inputs[8]
-                                set_6 = toon_shader.inputs[11]  # Reflection Color
-                                set_7 = toon_shader.inputs[12]
-                                set_8 = toon_shader.inputs[13]
-                                set_9 = toon_shader.inputs[21]
+                                # Build list of (set_input, display_label, internal_name) tuples for iteration
+                                shader_inputs = [
+                                    (toon_shader.inputs[input_mapping['Shadow Color']], 'Shadow Color', 'Shadow Color'),
+                                    (toon_shader.inputs[input_mapping['Key Light Color']], 'Key Light Color', 'Key Light Color'),
+                                    (toon_shader.inputs[input_mapping['Fill Light Color']], 'Fill Light Color', 'Fill Light Color'),
+                                    (toon_shader.inputs[input_mapping['White Outline']], 'White Outline', 'White Outline'),
+                                    (toon_shader.inputs[input_mapping['Outline Thickness']], 'Outline Thickness', 'Outline Thickness'),
+                                    (toon_shader.inputs[input_mapping['Specular Reflection']], 'Reflection Color', '--- Specular Reflection ---'),
+                                    (toon_shader.inputs[input_mapping['Softness']], 'Softness', 'Softness'),
+                                    (toon_shader.inputs[input_mapping['Emission Brightness']], 'Emission Brightness', 'Emission Brightness'),
+                                    (toon_shader.inputs[input_mapping['Custom Color On/Off']], 'Custom Color On/Off', 'Custom Color On/Off'),
+                                ]
                                 
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_1.name)
-                                split.prop(set_1, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_2.name)
-                                split.prop(set_2, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_3.name)
-                                split.prop(set_3, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_4.name)
-                                split.prop(set_4, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_5.name)
-                                split.prop(set_5, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text='Reflection Color')
-                                split.prop(set_6, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_7.name)
-                                split.prop(set_7, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_8.name)
-                                split.prop(set_8, "default_value", text="")
-                                
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text=set_9.name)
-                                split.prop(set_9, "default_value", text="")
+                                # Direct property access - changes apply to active object only
+                                # Per-entry play button - each value has its own spread button
+                                for set_val, label, internal_name in shader_inputs:
+                                    split = box.split(factor=0.5)
+                                    col = split.column(align=True)
+                                    col.label(text=label)
+                                    
+                                    # Value slider + spread button for this specific input
+                                    row = split.row(align=True)
+                                    row.prop(set_val, "default_value", text="")
+                                    row.operator("object.toon_shader_batch_update_all",
+                                                text="", icon='PLAY').input_name = internal_name
                                 
                                 box.label(text="If Shadow Glitchy - Set 'None'")
                                 # shadow_method moved from Material to scene.eevee in Blender 4.2+
                                 if hasattr(scene.eevee, "shadow_method"):
-                                split = box.split(factor=0.5)
-                                col = split.column(align=True)
-                                col.label(text='Shadow')
+                                    split = box.split(factor=0.5)
+                                    col = split.column(align=True)
+                                    col.label(text='Shadow')
                                     split.prop(scene.eevee, "shadow_method", text="")
                                 else:
                                     # Fallback for Blender 4.2+ if property doesn't exist
@@ -978,7 +983,7 @@ class OTHERS_PT_panel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         prefs = scene.my_prefs
-
+        
         # Animated Staging
         box = layout.box()
         box.operator('object.lb_button_spawn', text='Animated Staging + Camera').lobby_other = 'Animated Staging'
@@ -1006,6 +1011,90 @@ class OTHERS_PT_panel(bpy.types.Panel):
 
 
 # Updates tracker tab
+
+######### Toon Shader Batch Update Operator #########
+
+class TOON_SHADER_BATCH_UPDATE_ALL(bpy.types.Operator):
+    """Operator to spread a specific shader input value to all selected objects."""
+    bl_label = "Spread Toon Shader Value"
+    bl_idname = "object.toon_shader_batch_update_all"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    input_name: bpy.props.StringProperty(name="Input Name", description="Name of the shader input to spread")
+    
+    def execute(self, context):
+        scene = context.scene
+        
+        # Get active object's shader value first
+        active_obj = context.object
+        if not active_obj or not active_obj.active_material:
+            self.report({'WARNING'}, "No active object with material")
+            return {'CANCELLED'}
+        
+        active_mat = active_obj.active_material
+        active_toon = active_mat.node_tree.nodes.get('Apex ToonShader')
+        
+        if not active_toon or not hasattr(active_toon, 'inputs'):
+            self.report({'WARNING'}, "Active object doesn't have Apex ToonShader")
+            return {'CANCELLED'}
+        
+        # Get the specific value from active object's shader (strip ALL quotes and whitespace)
+        source_value = None
+        
+        search_term = self.input_name.strip()
+        
+        for inp in active_toon.inputs:
+            inp_name = inp.name.strip()
+            
+            if inp_name == search_term:
+                # Support both COLOR and RGBA types for reading source value
+                if inp.type in ('COLOR', 'RGBA'):
+                    source_value = tuple(inp.default_value[:4])
+                elif inp.type == 'VALUE':
+                    source_value = inp.default_value
+                break
+        
+        if source_value is None:
+            # Debug: print available input names with repr to see hidden chars
+            available_names = [repr(inp.name) for inp in active_toon.inputs]
+            self.report({'WARNING'}, f"Input '{self.input_name}' not found. Available: {available_names}")
+            return {'CANCELLED'}
+        
+        # Get ALL selected objects with Apex ToonShader (including active)
+        toon_objects = [obj for obj in context.selected_objects
+                       if obj.active_material and hasattr(obj.active_material, 'node_tree')
+                       and 'Apex ToonShader' in obj.active_material.node_tree.nodes]
+        
+        if not toon_objects:
+            self.report({'WARNING'}, "No selected objects with Apex ToonShader")
+            return {'CANCELLED'}
+        
+        # Spread value to all selected objects
+        updated_count = 0
+        for obj in toon_objects:
+            mat = obj.active_material
+            node_tree = mat.node_tree
+            toon_shader = node_tree.nodes.get('Apex ToonShader')
+            
+            if toon_shader and hasattr(toon_shader, 'inputs'):
+                try:
+                    for inp in toon_shader.inputs:
+                        inp_name = inp.name.strip()
+                        
+                        if inp_name == search_term:
+                            # Support both COLOR and RGBA types for spreading
+                            if inp.type in ('COLOR', 'RGBA'):
+                                inp.default_value = source_value
+                            elif inp.type == 'VALUE':
+                                inp.default_value = source_value
+                            updated_count += 1
+                            break
+                except Exception as e:
+                    print(f"Error updating {obj.name}: {e}")
+        
+        self.report({'INFO'}, f"Spread '{self.input_name}' to {updated_count} objects")
+        return {'FINISHED'}
+
 
 class UPDATE_PT_panel(bpy.types.Panel):
     """UPDATES TRACKER panel."""
