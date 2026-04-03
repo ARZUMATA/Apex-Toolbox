@@ -227,10 +227,17 @@ class AUTOTEX_MENU(bpy.types.Panel):
                                 split.prop(set_9, "default_value", text="")
                                 
                                 box.label(text="If Shadow Glitchy - Set 'None'")
+                                # shadow_method moved from Material to scene.eevee in Blender 4.2+
+                                if hasattr(scene.eevee, "shadow_method"):
                                 split = box.split(factor=0.5)
                                 col = split.column(align=True)
                                 col.label(text='Shadow')
-                                split.prop(act_mat, "shadow_method", text="")
+                                    split.prop(scene.eevee, "shadow_method", text="")
+                                else:
+                                    # Fallback for Blender 4.2+ if property doesn't exist
+                                    box.label(text="Shadow Method: Check EEVEE Render Settings")
+                                    box.label(text="        shadow_method moved from Material")
+                                    box.label(text="        to scene.eevee in Blender 4.2")
                             except Exception as e:
                                 box.label(text=f"Error loading shader settings: {e}")
 
