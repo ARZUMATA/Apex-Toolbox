@@ -68,7 +68,7 @@ from .operators import (
 
 from .panels import (
     AUTOTEX_MENU, EFFECTS_PT_panel, OTHERS_PT_panel, UPDATE_PT_panel,
-    TOON_SHADER_BATCH_UPDATE_ALL
+    TOON_SHADER_BATCH_UPDATE_ALL, OUTLINE_THICKNESS_BATCH_UPDATE
 )
 
 
@@ -96,6 +96,7 @@ classes = (
     LB_BUTTON_SPAWN,
     HL_BUTTON_SPAWN,
     EF_BUTTON_SPAWN,
+    OUTLINE_THICKNESS_BATCH_UPDATE,
     TOON_SHADER_BATCH_UPDATE_ALL,
     AUTOTEX_MENU,
     EFFECTS_PT_panel,
@@ -146,6 +147,15 @@ def register():
     bpy.types.Scene.subpanel_effects_lobby = bpy.props.BoolProperty(default=False) 
     bpy.types.Scene.subpanel_effects_other = bpy.props.BoolProperty(default=False)   
     bpy.types.Scene.subpanel_effects_sky = bpy.props.BoolProperty(default=False)
+    
+    # Outline thickness property for batch update
+    bpy.types.Scene.outline_thickness = bpy.props.FloatProperty(
+        name="Outline Thickness",
+        description="Thickness value to apply to all selected OUTLINE_SOLIDIFY modifiers (negative for inset)",
+        default=-0.1,
+        min=-10.0,
+        max=10.0
+    )
 
 
 def unregister():
@@ -187,7 +197,8 @@ def unregister():
     del bpy.types.Scene.subpanel_effects_loot_prop7
     del bpy.types.Scene.subpanel_effects_lobby 
     del bpy.types.Scene.subpanel_effects_other
-    del bpy.types.Scene.subpanel_effects_sky 
+    del bpy.types.Scene.subpanel_effects_sky
+    del bpy.types.Scene.outline_thickness
 
 
 if __name__ == "__main__":

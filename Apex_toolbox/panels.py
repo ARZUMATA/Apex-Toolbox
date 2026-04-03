@@ -246,6 +246,30 @@ class AUTOTEX_MENU(bpy.types.Panel):
                             except Exception as e:
                                 box.label(text=f"Error loading shader settings: {e}")
 
+            # Outline Thickness Batch Update Section
+            box.label(text="")
+            box.label(text="Outline Thickness:")
+            
+            # Check for objects with OUTLINE_SOLIDIFY modifier
+            outline_objects = [obj for obj in bpy.context.selected_objects
+                              if hasattr(obj, 'modifiers') and
+                              any(mod.type == 'SOLIDIFY' and 'OUTLINE' in mod.name.upper()
+                                  for mod in obj.modifiers)]
+            
+            if len(outline_objects) > 0:
+                box.label(text=f"Selected objects with OUTLINE_SOLIDIFY: {len(outline_objects)}")
+                
+                # Thickness slider + batch update button
+                split = box.split(factor=0.5)
+                col = split.column(align=True)
+                col.label(text='Thickness')
+                row = split.row(align=True)
+                row.prop(scene, "outline_thickness", text="")
+                row.operator("object.outline_thickness_batch_update",
+                            text="", icon='PLAY').thickness = scene.outline_thickness
+            else:
+                box.label(text="Select objects with OUTLINE_SOLIDIFY modifier first")
+
             # Settings Modified by Addon
             box.label(text="")
             box.label(text="Settings Modified by Addon:")
@@ -1093,6 +1117,44 @@ class TOON_SHADER_BATCH_UPDATE_ALL(bpy.types.Operator):
                     print(f"Error updating {obj.name}: {e}")
         
         self.report({'INFO'}, f"Spread '{self.input_name}' to {updated_count} objects")
+        return {'FINISHED'}
+
+
+######### Outline Thickness Batch Update Operator #########
+
+class OUTLINE_THICKNESS_BATCH_UPDATE(bpy.types.Operator):
+    """Operator to adjust outline thickness on all selected objects with OUTLINE_SOLIDIFY modifier."""
+    bl_label = "Outline Thickness Batch Update"
+    bl_idname = "object.outline_thickness_batch_update"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    thickness: bpy.props.FloatProperty(name="Thickness", default=-0.1, min=-10.0, max=10.0)
+    
+    def execute(self, context):
+        scene = context.scene
+        
+        # Get all selected objects with OUTLINE_SOLIDIFY modifier
+        outline_objects = [obj for obj in context.selected_objects
+                          if hasattr(obj, 'modifiers') and
+                          any(mod.type == 'SOLIDIFY' and 'OUTLINE' in mod.name.upper()
+                              for mod in obj.modifiers)]
+        
+        if not outline_objects:
+            self.report({'WARNING'}, "No selected objects with OUTLINE_SOLIDIFY modifier")
+            return {'CANCELLED'}
+        
+        # Adjust thickness on all matching modifiers
+        updated_count = 0
+        for obj in outline_objects:
+            try:
+                for mod in obj.modifiers:
+                    if mod.type == 'SOLIDIFY' and 'OUTLINE' in mod.name.upper():
+                        mod.thickness = self.thickness
+                        updated_count += 1
+            except Exception as e:
+                print(f"Error updating {obj.name}: {e}")
+        
+        self.report({'INFO'}, f"Updated outline thickness on {updated_count} modifiers")
         return {'FINISHED'}
 
 
